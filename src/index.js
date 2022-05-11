@@ -1,6 +1,7 @@
 import React, { Component } from 'react'
 import ReactDOM from 'react-dom/client'
 
+const M = 3;
 
 function Square(props) {
     return (
@@ -23,24 +24,21 @@ class Board extends Component {
     }
 
     render() {
+        var n = 0;
+        let board = [];
+        for (var i = 0; i < M; i++) {
+            var boardRow = [];
+            for (var j = 0; j < M; j++, n++) {
+                boardRow.push(this.renderSquare(n));
+            }
+            board.push(
+                <div className="board-row" key={i}>{boardRow}</div>
+            );
+        }
+
+        /* to solve?? */
         return (
-            <div>
-                <div className="board-row">
-                    {this.renderSquare(0)}
-                    {this.renderSquare(1)}
-                    {this.renderSquare(2)}
-                </div>
-                <div className="board-row">
-                    {this.renderSquare(3)}
-                    {this.renderSquare(4)}
-                    {this.renderSquare(5)}
-                </div>
-                <div className="board-row">
-                    {this.renderSquare(6)}
-                    {this.renderSquare(7)}
-                    {this.renderSquare(8)}
-                </div>
-            </div>
+            <div key={i}>{board}</div>
         );
     }
 }
@@ -49,11 +47,14 @@ class Game extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            history: [{ squares: Array(9).fill(null), }],
+            history: [{ squares: Array(M * M).fill(null), row: null, col: null },
+            ],
             xIsNext: true,
             stepNumber: 0,
         };
     }
+
+    // 跳到某一步
     jumpTo(step) {
         this.setState({
             stepNumber: step,
@@ -61,6 +62,7 @@ class Game extends React.Component {
         });
     }
 
+    // 落子之后
     handleClick(i) {
         const history = this.state.history.slice(0, this.state.stepNumber + 1);
         const current = history[history.length - 1];
@@ -71,18 +73,18 @@ class Game extends React.Component {
 
         squares[i] = this.state.xIsNext ? 'X' : 'O';
         this.setState({
-            history: history.concat([{ squares: squares, }]),
+            history: history.concat([
+                {
+                    squares: squares,
+                    row: parseInt(i / M) + 1,
+                    col: i % M + 1,
+                }
+            ]),
             xIsNext: !this.state.xIsNext,
             stepNumber: history.length,
         });
     }
-    // 也可以用guid()生成随机ID，给下面生成的li附id
-    /*  guid() {
-         return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
-             var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
-             return v.toString(16);
-         });
-     } */
+
 
     render() {
         const history = this.state.history;
@@ -91,15 +93,22 @@ class Game extends React.Component {
 
         const moves = history.map((step, move) => {
             const desc = move ?
-                'Go to move #' + move :
+                'Go to the ' + move + 'th step：' + '(' + step.row + '，' + step.col + ')' :
                 'Go to game start';
 
-            return (
+            if (step === current) {
+                return (
+                    <li key={move}>
+
+                        <button onClick={() => this.jumpTo(move)} ><strong>{desc}</strong></button>
+                    </li>
+                )
+            } else return (
                 <li key={move}>
-                    {/* 也可以用guid()生成随机ID，给生成的li附id */}
                     <button onClick={() => this.jumpTo(move)} >{desc}</button>
                 </li>
             )
+
         })
 
         let status;
